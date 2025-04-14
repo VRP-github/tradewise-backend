@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "upload_file",
     "rest_framework",
+    "analytics_reports",
+    "commission_fees",
     "portfolio_organizer",
     "django.contrib.staticfiles",
 ]
