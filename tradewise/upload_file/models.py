@@ -152,3 +152,5 @@ class TransactionMapping(models.Model):
                 except ValueError:
                     self.TRANSACTION_MAPPING_ID = "TM100"
         super().save(*args, **kwargs)
+
+
