@@ -6,7 +6,9 @@ from upload_file.models import TransactionDetail
 from .models import TradeLogs
 from datetime import datetime
 import json
-
+from django.http import HttpResponse
+def home(request):
+    return HttpResponse("Welcome to Tradewise!")
 
 @csrf_exempt
 @require_POST
