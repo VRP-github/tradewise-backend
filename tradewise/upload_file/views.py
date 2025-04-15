@@ -115,6 +115,7 @@ def upload_file(request, customer_id, account_id):
                     IS_ACTIVE='Y',
                     CREATE_DATE=datetime.now(timezone).date(),
                     CREATED_BY='system',
+                    FILENAME=filename,
                 )
                 inserted_transaction_details += 1
 

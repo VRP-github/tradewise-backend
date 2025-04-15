@@ -50,6 +50,7 @@ class TransactionDetail(models.Model):
     IS_ACTIVE = models.CharField(max_length=1)
     CREATE_DATE = models.DateField()
     CREATED_BY = models.CharField(max_length=100)
+    FILENAME = models.CharField(max_length=100, default='unknown_file.csv')
 
     class Meta:
         db_table = 'TRANSACTION_DETAIL'
@@ -152,5 +153,4 @@ class TransactionMapping(models.Model):
                 except ValueError:
                     self.TRANSACTION_MAPPING_ID = "TM100"
         super().save(*args, **kwargs)
-
 
