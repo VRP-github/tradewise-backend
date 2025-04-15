@@ -31,7 +31,7 @@ SECRET_KEY = "django-insecure-i!=725zex(2d9w4%-8!ekvg9-pv$a#prz=9few352_(!76z_kv
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['tradewise-backend-11.onrender.com']
+ALLOWED_HOSTS = ['tradewise-backend-10.onrender.com']
 
 
 # Application definition
