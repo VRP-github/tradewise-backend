@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "analytics_reports",
     "commission_fees",
     "dashboard",
+    "trade_log",
     "portfolio_organizer",
     "django.contrib.staticfiles",
 ]
