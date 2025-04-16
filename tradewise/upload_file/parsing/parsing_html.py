@@ -1,12 +1,15 @@
 import pandas as pd
 from datetime import datetime
 import logging
-
+import numpy as np
+import io
 
 def parsing_html(html_file):
     try:
         html_file.seek(0)
-        tables = pd.read_html(html_file, flavor='lxml', header=None)
+        html_bytes = html_file.read()
+        html_str = html_bytes.decode('utf-8')
+        tables = pd.read_html(io.StringIO(html_str), flavor='lxml', header=None)
 
         raw_data = []
         for table in tables:
@@ -41,16 +44,37 @@ def parsing_html(html_file):
             'JUL': '07', 'AUG': '08', 'SEP': '09', 'OCT': '10', 'NOV': '11', 'DEC': '12'
         }
 
+        import numpy as np
+
         def generate_id(row):
             try:
-                month = month_map.get(row['Month'].upper(), '00')
-                day = str(row['Day']).zfill(2)
-                strike = str(int(row['Strike']))
-                return f"{row['Symbol']}{row['Year']}{month}{day}{row['Type'][0]}{strike}"
-            except Exception as e:
-                logging.warning(f"Failed to generate ID for row: {e}")
-                return "INVALID_ID"
+                # Safely get values
+                month = row.get('Month', '').upper()
+                day = str(row.get('Day', '')).zfill(2)
+                year = str(row.get('Year', ''))
 
+                # Convert strike safely
+                strike_val = row.get('Strike')
+                if pd.isna(strike_val) or not np.isfinite(strike_val):
+                    raise ValueError("Non-finite strike")
+
+                strike = str(int(float(strike_val)))
+
+                # Type might be NaN too
+                type_val = str(row.get('Type', 'C'))  # default to 'C' or handle as needed
+
+                month_num = month_map.get(month, '00')  # fallback if month is missing
+
+                return f"{row['Symbol']}{year}{month_num}{day}{type_val[0]}{strike}"
+
+            except Exception as e:
+                logging.warning(f"generate_id failed for row: {row.to_dict()}, error: {e}")
+                return "INVALID_ID"
+            
+        df = df[
+            df['Strike'].notna() &
+            pd.to_numeric(df['Strike'], errors='coerce').notna()
+        ]
         df['Transaction_Detail_ID'] = df.apply(generate_id, axis=1)
 
         final_columns = [
