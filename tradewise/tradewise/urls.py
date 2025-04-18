@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.http import HttpResponse
 
 def home(request):
-    return HttpResponse("It works! Welcome to the homepage.")
+    return HttpResponse("Welcome to Tradewise!!")
 
 urlpatterns = [
     path('', home),
