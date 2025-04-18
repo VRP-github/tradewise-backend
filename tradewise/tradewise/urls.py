@@ -1,7 +1,12 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
+
+def home(request):
+    return HttpResponse("It works! Welcome to the homepage.")
 
 urlpatterns = [
+    path('', home),
     path('admin/', admin.site.urls),
     path('upload_file/', include('upload_file.urls')),  
     path('portfolio_organizer/', include('portfolio_organizer.urls')),
