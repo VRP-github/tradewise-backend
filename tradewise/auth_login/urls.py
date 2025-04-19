@@ -9,4 +9,5 @@ urlpatterns = [
     path('customer_profile_detail/<str:customer_id>/', views.customer_info, name="customer_profile_detail"),
     path('edit_customer/<str:customer_id>/', views.edit_customer_info, name='edit_customer_info'),
     path('change_password/<str:customer_id>/', views.change_customer_password, name='change_customer_password'),
+    path('recover_account/', views.recover_account, name='recover_account'),
 ]
