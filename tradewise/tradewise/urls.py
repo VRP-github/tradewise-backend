@@ -1,7 +1,12 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.shortcuts import redirect
+
+def home_redirect(request):
+    return redirect('/auth_login/login/')  
 
 urlpatterns = [
+    path('', home_redirect),
     path('admin/', admin.site.urls),
     path('upload_file/', include('upload_file.urls')),  
     path('portfolio_organizer/', include('portfolio_organizer.urls')),
