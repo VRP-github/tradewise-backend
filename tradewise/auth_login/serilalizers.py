@@ -104,6 +104,25 @@ class LoginSerializer(serializers.Serializer):
 
 
 
+# class LogoutUserSerializer(serializers.Serializer):
+#     refresh = serializers.CharField()
+
+#     def validate(self, attrs):
+#         # Ensure 'refresh' is present in the request data
+#         if 'refresh' not in attrs:
+#             raise serializers.ValidationError({'refresh': 'This field is required.'})
+
+#         return attrs
+
+#     def save(self, **kwargs):
+#         refresh_token = self.validated_data['refresh']
+
+#         try:
+#             token = RefreshToken(refresh_token)
+#             token.blacklist()
+#         except Exception as e:
+#             raise serializers.ValidationError({'error': str(e)})
+
 class LogoutUserSerializer(serializers.Serializer):
     refresh = serializers.CharField()
 
