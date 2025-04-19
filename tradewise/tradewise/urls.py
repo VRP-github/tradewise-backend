@@ -1,12 +1,12 @@
 from django.contrib import admin
 from django.urls import path, include
-from django.shortcuts import redirect
+from django.http import HttpResponse
 
-def home_redirect(request):
-    return redirect('/auth_login/login/')  
+def home(request):
+    return HttpResponse("Welcome to Tradewise!!")
 
 urlpatterns = [
-    path('', home_redirect),
+    path('', home),
     path('admin/', admin.site.urls),
     path('upload_file/', include('upload_file.urls')),  
     path('portfolio_organizer/', include('portfolio_organizer.urls')),
