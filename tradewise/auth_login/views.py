@@ -52,16 +52,15 @@ class LogoutUserView(GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        # Optionally validate token structure only
         refresh_token = serializer.validated_data.get('refresh')
-        if refresh_token:
-            try:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-                return JsonResponse({'message': 'Logout successful.'}, status=status.HTTP_204_NO_CONTENT)
-            except Exception as e:
-                return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return JsonResponse({'error': 'refresh is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            token = RefreshToken(refresh_token)
+            # Don't blacklist — just acknowledge logout
+            return JsonResponse({'message': 'Logout acknowledged. Please delete the token on client side.'}, status=status.HTTP_200_OK)
+        except TokenError as e:
+            return JsonResponse({'error': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @csrf_exempt
 def customer_info(request, customer_id):
@@ -123,6 +122,36 @@ def change_customer_password(request, customer_id):
         customer_obj.save()
 
         return JsonResponse({'message': 'Password updated successfully.'}, status=200)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON format.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+@csrf_exempt
+@require_POST
+def recover_account(request):
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        email = data.get('email')
+        new_password = data.get('new_password', None)  # Optional on first step
+
+        if not email:
+            return JsonResponse({'error': 'Email is required.'}, status=400)
+
+        customer_obj = customer.objects.filter(EMAIL=email).first()
+        if not customer_obj:
+            return JsonResponse({'error': 'Customer with this email does not exist.'}, status=404)
+
+        # Step 1: Only email is provided
+        if not new_password:
+            return JsonResponse({'message': 'Email verified. Please provide a new password.'}, status=200)
+
+        # Step 2: New password is provided
+        customer_obj.set_password(new_password)
+        customer_obj.save()
+
+        return JsonResponse({'message': 'Password reset successfully.'}, status=200)
 
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON format.'}, status=400)
