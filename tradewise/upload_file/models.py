@@ -1,10 +1,5 @@
-from django.db import models
-from django.db import connection
-# import logging
+from django.db import models, connection
 from django.utils import timezone
-from django.db.models import Max
-# from auth_login.models import customer
-# from accounts.models import Account
 
 
 def insert_transactions(parsed_data):
@@ -24,16 +19,12 @@ def insert_transactions(parsed_data):
                      predicted_date, predicted_rate, put_call, rate, exchange_center, misc_fees, commissions_fees,
                      amount, balance)
                 )
-
             connection.commit()
-            # logging.info('Data inserted into database successfully for Inserting Parsed Data (/upload_file).')
             return {'message': 'File received and data inserted successfully', 'data': parsed_data}, 200
 
     except Exception as e:
-        connection.rollback()  # Rollback the transaction if an error occurs
-        # logging.error(f'Error inserting data into database: {str(e)}')
+        connection.rollback()
         return {'error': f'Error inserting data into database: {str(e)}'}, 500
-
 
 
 class TransactionDetail(models.Model):
@@ -57,18 +48,14 @@ class TransactionDetail(models.Model):
 
     def __str__(self):
         return self.TRANSACTION_DETAIL_ID
-    
+
     def save(self, *args, **kwargs):
         if not self.TRANSACTION_DETAIL_ID:
-            last_detail = TransactionDetail.objects.order_by('TRANSACTION_DETAIL_ID').last()
-            if not last_detail:
-                self.TRANSACTION_DETAIL_ID = "TD100"
-            else:
-                try:
-                    last_id = int(last_detail.TRANSACTION_DETAIL_ID[2:])
-                    self.TRANSACTION_DETAIL_ID = 'TD' + str(last_id + 1)
-                except ValueError:
-                    self.TRANSACTION_DETAIL_ID = "TD100"  
+            last_id_obj = TransactionDetail.objects \
+                .extra(select={'numeric_id': "CAST(SUBSTRING(\"TRANSACTION_DETAIL_ID\" FROM 3) AS INTEGER)"}) \
+                .order_by('-numeric_id') \
+                .first()
+            self.TRANSACTION_DETAIL_ID = f'TD{(int(last_id_obj.TRANSACTION_DETAIL_ID[2:]) + 1) if last_id_obj else 100}'
         super().save(*args, **kwargs)
 
 
@@ -88,6 +75,16 @@ class Commission(models.Model):
 
     def __str__(self):
         return self.COMMISSION_ID
+
+    def save(self, *args, **kwargs):
+        if not self.COMMISSION_ID:
+            last_id_obj = Commission.objects \
+                .extra(select={'numeric_id': "CAST(SUBSTRING(\"COMMISSION_ID\" FROM 3) AS INTEGER)"}) \
+                .order_by('-numeric_id') \
+                .first()
+            self.COMMISSION_ID = f'CM{(int(last_id_obj.COMMISSION_ID[2:]) + 1) if last_id_obj else 100}'
+        super().save(*args, **kwargs)
+
 
 class TransactionSummary(models.Model):
     TRANSACTION_SUMMARY_ID = models.CharField(max_length=10, primary_key=True)
@@ -116,15 +113,11 @@ class TransactionSummary(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.TRANSACTION_SUMMARY_ID:
-            last_summary = TransactionSummary.objects.order_by('TRANSACTION_SUMMARY_ID').last()
-            if not last_summary:
-                self.TRANSACTION_SUMMARY_ID = "TS100"
-            else:
-                try:
-                    last_id = int(last_summary.TRANSACTION_SUMMARY_ID[2:])  # strip "TS" and convert to int
-                    self.TRANSACTION_SUMMARY_ID = 'TS' + str(last_id + 1)
-                except ValueError:
-                    self.TRANSACTION_SUMMARY_ID = "TS100"  # fallback if parsing fails
+            last_id_obj = TransactionSummary.objects \
+                .extra(select={'numeric_id': "CAST(SUBSTRING(\"TRANSACTION_SUMMARY_ID\" FROM 3) AS INTEGER)"}) \
+                .order_by('-numeric_id') \
+                .first()
+            self.TRANSACTION_SUMMARY_ID = f'TS{(int(last_id_obj.TRANSACTION_SUMMARY_ID[2:]) + 1) if last_id_obj else 100}'
         super().save(*args, **kwargs)
 
 
@@ -143,14 +136,9 @@ class TransactionMapping(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.TRANSACTION_MAPPING_ID:
-            last_mapping = TransactionMapping.objects.order_by('TRANSACTION_MAPPING_ID').last()
-            if not last_mapping:
-                self.TRANSACTION_MAPPING_ID = "TM100"
-            else:
-                try:
-                    last_id = int(last_mapping.TRANSACTION_MAPPING_ID[2:])  # strip "TM"
-                    self.TRANSACTION_MAPPING_ID = 'TM' + str(last_id + 1)
-                except ValueError:
-                    self.TRANSACTION_MAPPING_ID = "TM100"
+            last_id_obj = TransactionMapping.objects \
+                .extra(select={'numeric_id': "CAST(SUBSTRING(\"TRANSACTION_MAPPING_ID\" FROM 3) AS INTEGER)"}) \
+                .order_by('-numeric_id') \
+                .first()
+            self.TRANSACTION_MAPPING_ID = f'TM{(int(last_id_obj.TRANSACTION_MAPPING_ID[2:]) + 1) if last_id_obj else 100}'
         super().save(*args, **kwargs)
-
