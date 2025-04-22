@@ -1,11 +1,50 @@
+Tradelog/views.py
+
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
-from django.utils import timezone
+from datetime import datetime
 from upload_file.models import TransactionDetail
 from .models import TradeLogs
-from datetime import datetime
 import json
+
+
+def update_trade_logs_for_customer_account(customer_id, account_id):
+    unique_uploads = TransactionDetail.objects.filter(
+        CUSTOMER_ID=customer_id,
+        ACCOUNT_ID=account_id
+    ).values('FILENAME', 'CREATE_DATE').distinct()
+
+    logs_created = 0
+
+    for upload in unique_uploads:
+        filename = upload['FILENAME']
+        create_date = upload['CREATE_DATE']
+
+        if not TradeLogs.objects.filter(
+            CUSTOMER_ID=customer_id,
+            ACCOUNT_ID=account_id,
+            FILE_NAME=filename,
+            CREATE_DATE=create_date
+        ).exists():
+            TradeLogs.objects.create(
+                CUSTOMER_ID=customer_id,
+                ACCOUNT_ID=account_id,
+                FILE_NAME=filename,
+                UPLOAD_TIME=datetime.now(),
+                TOTAL_ENTRIES=TransactionDetail.objects.filter(
+                    CUSTOMER_ID=customer_id,
+                    ACCOUNT_ID=account_id,
+                    FILENAME=filename,
+                    CREATE_DATE=create_date
+                ).count(),
+                DUPLICATE_ENTRIES=0,
+                CREATE_DATE=create_date,
+                CREATED_BY='system'
+            )
+            logs_created += 1
+
+    return logs_created
 
 
 @csrf_exempt
@@ -19,39 +58,7 @@ def log_uploaded_filenames(request):
         if not customer_id or not account_id:
             return JsonResponse({'error': 'customer_id and account_id are required'}, status=400)
 
-        unique_uploads = TransactionDetail.objects.filter(
-            CUSTOMER_ID=customer_id,
-            ACCOUNT_ID=account_id
-        ).values('FILENAME', 'CREATE_DATE').distinct()
-
-        logs_created = 0
-
-        for upload in unique_uploads:
-            filename = upload['FILENAME']
-            create_date = upload['CREATE_DATE']
-
-            if not TradeLogs.objects.filter(
-                CUSTOMER_ID=customer_id,
-                ACCOUNT_ID=account_id,
-                FILE_NAME=filename,
-                CREATE_DATE=create_date
-            ).exists():
-                TradeLogs.objects.create(
-                    CUSTOMER_ID=customer_id,
-                    ACCOUNT_ID=account_id,
-                    FILE_NAME=filename,
-                    UPLOAD_TIME=datetime.now(),
-                    TOTAL_ENTRIES=TransactionDetail.objects.filter(
-                        CUSTOMER_ID=customer_id,
-                        ACCOUNT_ID=account_id,
-                        FILENAME=filename,
-                        CREATE_DATE=create_date
-                    ).count(),
-                    DUPLICATE_ENTRIES=0,
-                    CREATE_DATE=create_date,
-                    CREATED_BY='system'
-                )
-                logs_created += 1
+        logs_created = update_trade_logs_for_customer_account(customer_id, account_id)
 
         return JsonResponse({'message': f'{logs_created} trade logs created.'}, status=200)
 
@@ -71,6 +78,9 @@ def get_trade_logs_by_customer_account(request):
         if not customer_id or not account_id:
             return JsonResponse({'error': 'customer_id and account_id are required'}, status=400)
 
+        # Ensure logs are updated before fetching
+        update_trade_logs_for_customer_account(customer_id, account_id)
+
         logs = TradeLogs.objects.filter(
             CUSTOMER_ID=customer_id,
             ACCOUNT_ID=account_id
@@ -84,7 +94,7 @@ def get_trade_logs_by_customer_account(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
+
 
 @csrf_exempt
 @require_POST
@@ -104,6 +114,9 @@ def get_trade_logs_by_date_range(request):
             end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
         except ValueError:
             return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+
+        # Ensure logs are updated before fetching
+        update_trade_logs_for_customer_account(customer_id, account_id)
 
         logs = TradeLogs.objects.filter(
             CUSTOMER_ID=customer_id,
