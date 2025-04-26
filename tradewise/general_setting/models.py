@@ -29,7 +29,7 @@ from auth_login.models import customer
 class TradeSetting(models.Model):
     trade_id = models.AutoField(primary_key=True)
     customer_id = models.ForeignKey(customer, on_delete=models.CASCADE, db_column="customer_id")
-    account_id = models.CharField(max_length=100)
+    account_id = models.CharField(max_length=100, unique=True)  
     type = models.CharField(max_length=50)
     from_field = models.CharField(max_length=50, db_column="from_value")
     to_field = models.CharField(max_length=50, db_column="to_value")
@@ -39,5 +39,3 @@ class TradeSetting(models.Model):
 
     def __str__(self):
         return f"TradeSetting #{self.trade_id} | Customer: {self.customer_id} | Account: {self.account_id}"
-
-
